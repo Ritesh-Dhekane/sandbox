@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pointer Tracker</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    display: block;
+    background: #f5f5f5;
+}
+
+.panel {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 320px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+#history {
+    margin-top: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+    font-size: 12px;
+}
+
+.log-entry {
+    padding: 2px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="panel">
+    <div id="coords">X: 0 | Y: 0</div>
+
+    <div id="status" style="margin-top:8px;color:red;">
+        No movement detected
+    </div>
+
+    <div id="lastMove" style="margin-top:8px;">
+        Last movement: Never
+    </div>
+
+    <div id="history">
+        <strong>Movement History</strong>
+    </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const coords = document.getElementById("coords");
+const status = document.getElementById("status");
+const lastMove = document.getElementById("lastMove");
+const history = document.getElementById("history");
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+resize();
+window.addEventListener("resize", resize);
+
+let lastX = null;
+let lastY = null;
+let movementTimer;
+
+function addHistory(x, y) {
+    const now = new Date();
+
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+
+    entry.textContent =
+        `${now.toLocaleTimeString()} → X:${x}, Y:${y}`;
+
+    history.insertBefore(entry, history.children[1]);
+
+    while (history.children.length > 21) {
+        history.removeChild(history.lastChild);
+    }
+}
+
+document.addEventListener("pointermove", (e) => {
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+    coords.textContent = `X: ${x} | Y: ${y}`;
+
+    if (lastX !== null) {
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = "#0078ff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    lastX = x;
+    lastY = y;
+
+    const now = new Date();
+
+    status.textContent = "Movement detected";
+    status.style.color = "green";
+
+    lastMove.textContent =
+        `Last movement: ${now.toLocaleTimeString()}`;
+
+    addHistory(x, y);
+
+    clearTimeout(movementTimer);
+
+    movementTimer = setTimeout(() => {
+        status.textContent = "No movement detected";
+        status.style.color = "red";
+    }, 1000);
+});
+</script>
+
+</body>
+</html>
